@@ -1,0 +1,7 @@
+toml
+boto3
+requests
+streamlit
+unidecode
+botocore
+streamlit==1.32.0
