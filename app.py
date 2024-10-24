@@ -12,7 +12,7 @@ from botocore.exceptions import NoCredentialsError
 
 
 #############################################################################################################################################
-
+#This corresponds to the banner that says something of detonaciones del chatbot
 
 st.set_page_config(page_title = "Pernexium", page_icon = "./Varios/Logo/PXM isotipo 2.png")
 
@@ -37,9 +37,51 @@ def obtener_token_desde_secrets():
 
 #############################################################################################################################################
 
-
 def seleccionar_bot_campana():
-    url = "https://sls-chatbot.pernexium.com/dev/sessions"
+    url = "https://sls-chatbot.pernexium.com/prod/bots" 
+    token_perne = obtener_token_desde_secrets()
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token_perne}" 
+    }
+    
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if isinstance(data, list):
+            options = []
+            id_mapping = {}
+            for item in data:
+                option = f"{item['name']} - {item['id']}"
+                options.append(option)
+                id_mapping[option] = {
+                    'id': item['id'],
+                    'enterprise_id': item['enterprise_id']
+                }
+            if not options:
+                options.append("No hay campañas disponibles")
+        else:
+            options = ["Datos inesperados recibidos"]
+    else:
+        options = ["Error al obtener campañas"]
+    
+    bot_name = st.selectbox("**1. CAMPAÑA Y BOT:**", options)
+    st.markdown("<hr>", unsafe_allow_html=True)
+
+    # Get the corresponding id and enterprise_id from the mapping
+    bot_info = id_mapping.get(bot_name, {'id': 'Unknown ID', 'enterprise_id': 'Unknown Enterprise ID'})
+    bot_id = bot_info['id']
+    enterprise_id = bot_info['enterprise_id']
+    
+    return bot_id
+
+#############################################################################################################################################
+
+#TODO implement this function in further dev, this actually retrieves the sessions, and let user select session
+def seleccionar_session():
+    url = "https://sls-chatbot.pernexium.com/prod/sessions"
     token_perne = obtener_token_desde_secrets()
     
     headers = {
@@ -54,24 +96,23 @@ def seleccionar_bot_campana():
         if isinstance(data, list):
             options = []
             for item in data:
-                option = f"{item['name']} - {item['id']}"
+                option = item['id']
                 options.append(option)
             if not options:
-                options.append("No hay campañas disponibles")
+                options.append("No hay sesiones disponibles")
         else:
             options = ["Datos inesperados recibidos"]
     else:
-        options = ["Error al obtener campañas"]
+        options = ["Error al obtener sesiones"]
     
-    bot_name = st.selectbox("**1. CAMPAÑA Y BOT:**", options)
+    session_id = st.selectbox("**SESSION: **", options)
     st.markdown("<hr>", unsafe_allow_html=True)
     
-    return bot_name
-
+    return session_id
 
 #############################################################################################################################################
 
-
+#TODO ya no existe mora?
 def seleccionar_contactacion():
     contact_type = st.selectbox("**2. TIPO DE CONTACTACIÓN:**", ["mora_agentes", "cosecha_y_conflicto_agentes"])
     
@@ -100,7 +141,7 @@ def obtener_credenciales_aws():
 
 def subir_base(contact_type):
 
-    if contact_type == "mora":
+    if contact_type == "mora": #según entiendo esto ya no aparece
         return None, None
     
     aws_access_key_id, aws_secret_access_key = obtener_credenciales_aws()
@@ -147,7 +188,7 @@ def subir_base(contact_type):
 
 
 def seleccionar_agentes():
-    url = "https://sls-chatbot.pernexium.com/dev/agents"
+    url = "https://sls-chatbot.pernexium.com/prod/agents"
     token_perne = obtener_token_desde_secrets()
     
     headers = {
@@ -166,7 +207,8 @@ def seleccionar_agentes():
 
     if response.status_code == 200:
         agentes = response.json()
-        nombres_agentes = [normalize_name(agente['name']) for agente in agentes]
+        nombres_agentes = [normalize_name(agente['email']) for agente in agentes] #modified to use email instead of name
+        #TODO change to show the name and also retrieve the email so back can use the selected agent email
     else:
         st.error(f"Error al obtener los agentes: {response.status_code}")
         nombres_agentes = []
@@ -185,7 +227,7 @@ def seleccionar_agentes():
 
 #############################################################################################################################################
 
-
+#TODO add in return the name of generated files
 def invocar_lambda_cosecha(selected_agents, max_sends_per_day, max_messages_per_agent):
     aws_access_key_id, aws_secret_access_key = obtener_credenciales_aws()
     
@@ -202,6 +244,7 @@ def invocar_lambda_cosecha(selected_agents, max_sends_per_day, max_messages_per_
         InvocationType='RequestResponse',
         Payload=json.dumps(payload)
     )
+    print("cosecha_y_conflicto")
     
     output = json.loads(response['Payload'].read().decode('utf-8'))
     return output
@@ -210,6 +253,7 @@ def invocar_lambda_cosecha(selected_agents, max_sends_per_day, max_messages_per_
 #############################################################################################################################################
 
 
+#TODO add in return the name of generated files
 def invocar_lambda_mora(selected_agents, max_sends_per_day, max_messages_per_agent):
     aws_access_key_id, aws_secret_access_key = obtener_credenciales_aws()
     client = boto3.client('lambda',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key,region_name='us-east-2')
@@ -232,10 +276,10 @@ def invocar_lambda_mora(selected_agents, max_sends_per_day, max_messages_per_age
 
 #############################################################################################################################################
 
-
+#TODO here should receive also the session as a parameter so url is not fixed, but for demo keep it like this
 def seleccionar_templates_por_agente(selected_agents):
     st.markdown("<hr>", unsafe_allow_html=True)
-    url = "https://sls-chatbot.pernexium.com/dev/templates/session/353257377876857?session_id"
+    url = "https://sls-chatbot.pernexium.com/prod/templates/session/353257377876857?session_id"
     token_perne = obtener_token_desde_secrets()
     
     headers = {
@@ -312,7 +356,7 @@ def seleccionar_fecha_hora():
 
 
 def enviar_detonacion(event_json):
-    url = "https://t0gmbxwfah.execute-api.us-east-2.amazonaws.com/dev/detonation/config"
+    url = "https://kz565xlibg.execute-api.us-east-2.amazonaws.com/dev/detonation/config"
     
     headers = {"Content-Type": "application/json"}
 
@@ -343,30 +387,42 @@ def enviar_detonacion(event_json):
 #############################################################################################################################################
 
 
-def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_name, data_base):
+def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base):
+    current_date = datetime.now()
+    formatted_date = current_date.strftime('%Y_%m_%d')  
+    year_month = current_date.strftime('%Y_%m')
+    
     agent_templates_filtered = {}
     for agent, template_info in agent_templates.items():
         agent_templates_filtered[agent] = {
             "template_name": template_info.get("template_name")
         }
 
+    generated_files = [f"{formatted_date}_{agent}" for agent in agent_templates]
+
+    token = obtener_token_desde_secrets() #the token to be used in obtain wsbs
+
     event_data = {
-        "bot_name": bot_name,
+        "bot_id": bot_id,
         "contact_type": contact_type,
         "data_base": data_base,
         "selected_agents": selected_agents,
         "agent_templates": agent_templates_filtered,
         "max_sends_per_day": int(max_sends_per_day),
         "max_messages_per_agent": int(max_messages_per_agent),
-        "detonation_time": detonation_datetime.strftime('%d-%m-%Y %H:%M:%S')
+        "detonation_time": detonation_datetime.strftime('%d-%m-%Y %H:%M:%S'),
+        "selected_session": "353257377876857", #Corresponds to the session (meta phone number)
+        "generated_files": generated_files, #Corresponds to an array of the generated files in master
+        "token": token #corresponds to the token of cognito
     }
     
+    event_data_no_token = event_data.copy()
+    event_data_no_token.pop("token", None)
+
+    event_json_no_token = json.dumps(event_data_no_token, indent=4)
+
     event_json = json.dumps(event_data, indent=4)
     #st.code(event_json, language='json') 
-
-    current_date = datetime.now()
-    formatted_date = current_date.strftime('%Y_%m_%d')  
-    year_month = current_date.strftime('%Y_%m') 
 
     file_name = f"{formatted_date}_bancoppel_detonaciones_chatbot_{contact_type}_{year_month}.json"
     
@@ -377,7 +433,7 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
     s3_key = f"staging/bancoppel/detonaciones/{contact_type}/{year_month}/{file_name}" 
 
     try:
-        s3.put_object(Bucket=bucket_name, Key=s3_key, Body=event_json)
+        s3.put_object(Bucket=bucket_name, Key=s3_key, Body=event_json_no_token) #upload without token
         #st.success(f"Archivo JSON subido a S3 exitosamente.")
     except Exception as e:
         st.error(f"Error al subir el archivo a S3: {str(e)}")
@@ -435,7 +491,7 @@ def main():
         st.session_state.csv_generado = False
 
     # Paso 0: Selecciona bot y campaña
-    bot_name = seleccionar_bot_campana()
+    bot_id = seleccionar_bot_campana()
 
     # Paso 1: Selecciona tipo de contactación y subir base
     contact_type = seleccionar_contactacion()
@@ -479,7 +535,7 @@ def main():
 
         st.session_state.json_generado = generar_y_subir_json(
             contact_type, detonation_time, selected_agents, max_sends_per_day, 
-            max_messages_per_agent, agent_templates, bot_name, data_base
+            max_messages_per_agent, agent_templates, bot_id, data_base
         )
 
         st.session_state.configuracion_confirmada = True 
