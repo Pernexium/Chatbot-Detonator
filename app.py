@@ -207,7 +207,7 @@ def seleccionar_agentes():
 
     if response.status_code == 200:
         agentes = response.json()
-        nombres_agentes = [normalize_name(agente['email']) for agente in agentes] #modified to use email instead of name
+        nombres_agentes = [agente['email'] for agente in agentes] #modified to use email instead of name
         #TODO change to show the name and also retrieve the email so back can use the selected agent email
     else:
         st.error(f"Error al obtener los agentes: {response.status_code}")
@@ -398,7 +398,7 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
             "template_name": template_info.get("template_name")
         }
 
-    generated_files = [f"{formatted_date}_{agent}" for agent in agent_templates]
+    generated_files = [f"{formatted_date}_{agent}.csv" for agent in agent_templates]
 
     token = obtener_token_desde_secrets() #the token to be used in obtain wsbs
 
