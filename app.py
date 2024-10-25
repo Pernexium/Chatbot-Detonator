@@ -208,7 +208,7 @@ def seleccionar_agentes():
     if response.status_code == 200:
         agentes = response.json()
         nombres_agentes = [normalize_name(agente['name']) for agente in agentes]
-        emails_agentes = [agente['email'] for agente in agentes]  
+        emails_agentes = {normalize_name(agente['name']): agente['email'] for agente in agentes}  # Map names to emails
     else:
         st.error(f"Error al obtener los agentes: {response.status_code}")
         nombres_agentes = []
@@ -220,7 +220,10 @@ def seleccionar_agentes():
         max_messages_per_agent = st.number_input("**6. MÁXIMO DE MENSAJES POR AGENTE:**", min_value=0, step=100)
         st.markdown("<hr>", unsafe_allow_html=True)
 
-        return selected_agents, max_sends_per_day, max_messages_per_agent, emails_agentes
+        # Retrieve only the emails for selected agents
+        selected_emails = [emails_agentes[agent] for agent in selected_agents]
+        
+        return selected_agents, max_sends_per_day, max_messages_per_agent, selected_emails
     else:
         st.error("No se pudieron obtener los agentes.")
         return [], 0, 0, []
@@ -388,7 +391,7 @@ def enviar_detonacion(event_json):
 #############################################################################################################################################
 
 
-def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base):
+def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base, agent_mails):
     current_date = datetime.now()
     formatted_date = current_date.strftime('%Y_%m_%d')  
     year_month = current_date.strftime('%Y_%m')
@@ -399,7 +402,7 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
             "template_name": template_info.get("template_name")
         }
 
-    generated_files = [f"{formatted_date}_{agent}.csv" for agent in agent_templates]
+    generated_files = [f"{formatted_date}_{agent}.csv" for agent in agent_templates]#TODO pls correct with the propper name, could be returned by the lambda or even generated like this
 
     token = obtener_token_desde_secrets() #the token to be used in obtain wsbs
 
@@ -414,7 +417,8 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
         "detonation_time": detonation_datetime.strftime('%d-%m-%Y %H:%M:%S'),
         "selected_session": "353257377876857", #Corresponds to the session (meta phone number)
         "generated_files": generated_files, #Corresponds to an array of the generated files in master
-        "token": token #corresponds to the token of cognito
+        "token": token, #corresponds to the token of cognito
+        "agent_mails": agent_mails # this corresponds to an array that contains the mails of selected agents
     }
     
     event_data_no_token = event_data.copy()
@@ -537,7 +541,7 @@ def main():
 
         st.session_state.json_generado = generar_y_subir_json(
             contact_type, detonation_time, selected_agents, max_sends_per_day, 
-            max_messages_per_agent, agent_templates, bot_id, data_base
+            max_messages_per_agent, agent_templates, bot_id, data_base, emails_agentes
         )
 
         st.session_state.configuracion_confirmada = True 
