@@ -207,11 +207,12 @@ def seleccionar_agentes():
 
     if response.status_code == 200:
         agentes = response.json()
-        nombres_agentes = [agente['email'] for agente in agentes] #modified to use email instead of name
-        #TODO change to show the name and also retrieve the email so back can use the selected agent email
+        nombres_agentes = [normalize_name(agente['name']) for agente in agentes]
+        emails_agentes = [agente['email'] for agente in agentes]  
     else:
         st.error(f"Error al obtener los agentes: {response.status_code}")
         nombres_agentes = []
+        emails_agentes = []
 
     if nombres_agentes:
         selected_agents = st.multiselect("**4. AGENTES:**", nombres_agentes)
@@ -219,10 +220,10 @@ def seleccionar_agentes():
         max_messages_per_agent = st.number_input("**6. MÁXIMO DE MENSAJES POR AGENTE:**", min_value=0, step=100)
         st.markdown("<hr>", unsafe_allow_html=True)
 
-        return selected_agents, max_sends_per_day, max_messages_per_agent
+        return selected_agents, max_sends_per_day, max_messages_per_agent, emails_agentes
     else:
         st.error("No se pudieron obtener los agentes.")
-        return [], 0, 0
+        return [], 0, 0, []
 
 
 #############################################################################################################################################
@@ -503,7 +504,8 @@ def main():
         return  # Termina la ejecución si no se ha subido un archivo
 
     # Paso 2: Selecciona agentes y máximos
-    selected_agents, max_sends_per_day, max_messages_per_agent = seleccionar_agentes()
+    selected_agents, max_sends_per_day, max_messages_per_agent, emails_agentes = seleccionar_agentes()
+    print(emails_agentes)
 
     if st.button("Generar CSV's vía Lambda"):
         try:
