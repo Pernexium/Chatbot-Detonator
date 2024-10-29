@@ -209,10 +209,12 @@ def seleccionar_agentes():
         agentes = response.json()
         nombres_agentes = [normalize_name(agente['name']) for agente in agentes]
         emails_agentes = {normalize_name(agente['name']): agente['email'] for agente in agentes}  # Map names to emails
+        ids_agentes = {normalize_name(agente['name']): agente['id'] for agente in agentes}
     else:
         st.error(f"Error al obtener los agentes: {response.status_code}")
         nombres_agentes = []
         emails_agentes = []
+        ids_agentes = []
 
     if nombres_agentes:
         selected_agents = st.multiselect("**4. AGENTES:**", nombres_agentes)
@@ -222,11 +224,12 @@ def seleccionar_agentes():
 
         # Retrieve only the emails for selected agents
         selected_emails = [emails_agentes[agent] for agent in selected_agents]
+        selected_ids = [ids_agentes[agent] for agent in selected_agents] #Add retrieving of agents id
         
-        return selected_agents, max_sends_per_day, max_messages_per_agent, selected_emails
+        return selected_agents, max_sends_per_day, max_messages_per_agent, selected_emails, selected_ids
     else:
         st.error("No se pudieron obtener los agentes.")
-        return [], 0, 0, []
+        return [], 0, 0, [], []
 
 
 #############################################################################################################################################
@@ -391,7 +394,7 @@ def enviar_detonacion(event_json):
 #############################################################################################################################################
 
 
-def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base, agent_mails):
+def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base, agent_mails, agent_ids):
     current_date = datetime.now()
     formatted_date = current_date.strftime('%Y_%m_%d')  
     year_month = current_date.strftime('%Y_%m')
@@ -508,7 +511,7 @@ def main():
         return  # Termina la ejecución si no se ha subido un archivo
 
     # Paso 2: Selecciona agentes y máximos
-    selected_agents, max_sends_per_day, max_messages_per_agent, emails_agentes = seleccionar_agentes()
+    selected_agents, max_sends_per_day, max_messages_per_agent, emails_agentes, ids_agentes = seleccionar_agentes()
     print(emails_agentes)
 
     if st.button("Generar CSV's vía Lambda"):
@@ -541,7 +544,7 @@ def main():
 
         st.session_state.json_generado = generar_y_subir_json(
             contact_type, detonation_time, selected_agents, max_sends_per_day, 
-            max_messages_per_agent, agent_templates, bot_id, data_base, emails_agentes
+            max_messages_per_agent, agent_templates, bot_id, data_base, emails_agentes, ids_agentes
         )
 
         st.session_state.configuracion_confirmada = True 
