@@ -421,7 +421,8 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
         "selected_session": "353257377876857", #Corresponds to the session (meta phone number)
         "generated_files": generated_files, #Corresponds to an array of the generated files in master
         "token": token, #corresponds to the token of cognito
-        "agent_mails": agent_mails # this corresponds to an array that contains the mails of selected agents
+        "agent_mails": agent_mails, # this corresponds to an array that contains the mails of selected agents
+        "agent_ids": agent_ids
     }
     
     event_data_no_token = event_data.copy()
