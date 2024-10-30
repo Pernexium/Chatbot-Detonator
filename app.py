@@ -156,10 +156,9 @@ def subir_base(contact_type):
     if uploaded_file is not None:
         bytes_data = uploaded_file.read()
         
-        tz_mexico = pytz.timezone('America/Mexico_City')
-        hoy = datetime.now() - timedelta(hours=6)
-        year_month = hoy.now().strftime("%Y_%m")
-        day_month = hoy.now().strftime("%m_%d")
+        hoy = datetime.now() - timedelta(hours=6) 
+        year_month = hoy.strftime("%Y_%m")
+        day_month = hoy.strftime("%m_%d")
         
         bucket_name = 's3-pernexium-report'
         folder_path = f"raw/bancoppel/detonaciones/{contact_type}/{year_month}/"
