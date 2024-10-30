@@ -157,7 +157,7 @@ def subir_base(contact_type):
         bytes_data = uploaded_file.read()
         
         tz_mexico = pytz.timezone('America/Mexico_City')
-        hoy = datetime.now() - pd.Timedelta(hours=6)
+        hoy = datetime.now() - timedelta(hours=6)
         year_month = hoy.now().strftime("%Y_%m")
         day_month = hoy.now().strftime("%m_%d")
         
