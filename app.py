@@ -1,5 +1,6 @@
 import json
 import toml
+import pytz
 import boto3
 import base64
 import random
@@ -155,9 +156,10 @@ def subir_base(contact_type):
     if uploaded_file is not None:
         bytes_data = uploaded_file.read()
         
-        current_date = datetime.now()
-        year_month = current_date.strftime("%Y_%m")
-        day_month = current_date.strftime("%m_%d")
+        tz_mexico = pytz.timezone('America/Mexico_City')
+        hoy = datetime.now(tz_mexico)
+        year_month = hoy.now().strftime("%Y_%m")
+        day_month = hoy.now().strftime("%m_%d")
         
         bucket_name = 's3-pernexium-report'
         folder_path = f"raw/bancoppel/detonaciones/{contact_type}/{year_month}/"
