@@ -401,7 +401,8 @@ def enviar_detonacion(event_json):
 
 
 def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base, agent_mails, agent_ids):
-    current_date = datetime.now()
+    mexico_tz = pytz.timezone('America/Mexico_City')
+    current_date = datetime.now(mexico_tz)
     formatted_date = current_date.strftime('%Y_%m_%d')  
     year_month = current_date.strftime('%Y_%m')
     
