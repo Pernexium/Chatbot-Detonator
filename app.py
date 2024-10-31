@@ -349,7 +349,7 @@ def seleccionar_fecha_hora():
         min_value=current_date.date()
     )
     
-    times = [time(hour, minute) for hour in range(24) for minute in range(0, 60, 5)]
+    times = [time(hour, minute) for hour in range(24) for minute in range(0, 60, 10)]
     
     detonation_time = st.selectbox("**8. HORA DE DETONACIÓN:**", times, index=times.index(time(13, 0)))
     detonation_datetime = datetime.combine(selected_date, detonation_time)
