@@ -338,17 +338,22 @@ def seleccionar_templates_por_agente(selected_agents):
 
 
 def seleccionar_fecha_hora():
-    current_date = datetime.now()
+    mexico_tz = pytz.timezone('America/Mexico_City')
+    current_date = datetime.now(mexico_tz)
+    
     st.markdown("<hr>", unsafe_allow_html=True)
     
     selected_date = st.date_input(
         "**7. FECHA DE DETONACIÓN:**", 
-        value=current_date.date() + timedelta(days=0),
-        min_value=current_date.date()  # Solo fechas a partir de hoy
+        value=current_date.date(),
+        min_value=current_date.date()
     )
     
-    detonation_time = st.time_input("**8. HORA DE DETONACIÓN:**", value=time(13, 0))
+    times = [time(hour, minute) for hour in range(24) for minute in range(0, 60, 5)]
+    
+    detonation_time = st.selectbox("**8. HORA DE DETONACIÓN:**", times, index=times.index(time(13, 0)))
     detonation_datetime = datetime.combine(selected_date, detonation_time)
+    detonation_datetime = mexico_tz.localize(detonation_datetime) 
     
     if detonation_datetime <= current_date:
         st.error("La fecha y hora seleccionadas deben ser en el futuro.")
