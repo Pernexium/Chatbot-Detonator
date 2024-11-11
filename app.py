@@ -14,11 +14,9 @@ from unidecode import unidecode
 from datetime import datetime, time, timedelta
 from botocore.exceptions import NoCredentialsError
 
+from email.mime.text import MIMEText
 from botocore.exceptions import ClientError
 from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
 
 
 #############################################################################################################################################
@@ -46,6 +44,7 @@ def obtener_token_desde_secrets():
 
 
 #############################################################################################################################################
+
 
 def seleccionar_bot_campana():
     url = "https://sls-chatbot.pernexium.com/prod/bots" 
@@ -87,6 +86,7 @@ def seleccionar_bot_campana():
     
     return bot_id
 
+
 #############################################################################################################################################
 
 #TODO implement this function in further dev, this actually retrieves the sessions, and let user select session
@@ -119,6 +119,7 @@ def seleccionar_session():
     st.markdown("<hr>", unsafe_allow_html=True)
     
     return session_id
+
 
 #############################################################################################################################################
 
@@ -462,7 +463,7 @@ def enviar_detonacion(event_json):
 #############################################################################################################################################
 
 
-def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base, agent_mails, agent_ids):
+def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base, agent_mails, agent_ids, lambda_output, json_sanitizado):
     mexico_tz = pytz.timezone('America/Mexico_City')
     current_date = datetime.now(mexico_tz)
     formatted_date = current_date.strftime('%Y_%m_%d')  
@@ -491,7 +492,9 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
         "generated_files": generated_files, #Corresponds to an array of the generated files in master
         "token": token, #corresponds to the token of cognito
         "agent_mails": agent_mails, # this corresponds to an array that contains the mails of selected agents
-        "agent_ids": agent_ids
+        "agent_ids": agent_ids,
+        "lambda_output": lambda_output,
+        "json_sanitizado": json_sanitizado
     }
     
     event_data_no_token = event_data.copy()
@@ -727,14 +730,9 @@ def main():
 </body>
 </html>
 """
-
-
-
                 enviar_email_ses(destinatarios, asunto, cuerpo_html=cuerpo_html)
             else:
                 st.error("No se ha generado el JSON correctamente.")
-
-
 
 
 #############################################################################################################################################
