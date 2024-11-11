@@ -148,7 +148,9 @@ def subir_base(contact_type):
     aws_access_key_id, aws_secret_access_key = obtener_credenciales_aws()
     s3 = boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
     
-    uploaded_file = st.file_uploader("**3. BASE DE DETONACIONES:**", type=["xlsx"])
+    st.write("**3. BASE DE DETONACIONES:**")
+    st.write("El nombre de las columnas no debe contener espacios ni caracteres especiales, esto incluye tildes y mayúsculas. La base debe contener la columna 'credito'.")
+    uploaded_file = st.file_uploader("", type=["xlsx"])
     st.markdown("<hr>", unsafe_allow_html=True)
     
     data_base = None 
