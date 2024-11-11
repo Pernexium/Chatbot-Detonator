@@ -6,6 +6,9 @@ import base64
 import random
 import hashlib
 import requests
+import unidecode
+import pandas as pd
+from io import BytesIO
 import streamlit as st
 from unidecode import unidecode
 from datetime import datetime, time, timedelta
@@ -149,14 +152,19 @@ def subir_base(contact_type):
     s3 = boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
     
     st.write("**3. BASE DE DETONACIONES:**")
-    st.write("El nombre de las columnas no debe contener espacios ni caracteres especiales, esto incluye tildes y mayúsculas. La base debe contener la columna 'credito'.")
+    st.write("*La base debe ser un archivo .xlsx y debe contener la columna 'credito'. El nombre de las columnas no debe contener carácteres especiales, esto incluye tildes y mayúsculas.*")
     uploaded_file = st.file_uploader("", type=["xlsx"])
     st.markdown("<hr>", unsafe_allow_html=True)
     
     data_base = None 
     
     if uploaded_file is not None:
-        bytes_data = uploaded_file.read()
+        #bytes_data = uploaded_file.read()
+        df = pd.read_excel(uploaded_file)
+        df.columns = [unidecode(col).lower().replace(" ", "_") for col in df.columns]
+        output = BytesIO()
+        df.to_excel(output, index=False, engine='openpyxl')
+        output.seek(0)
         
         hoy = datetime.now() - timedelta(hours=6) 
         year_month = hoy.strftime("%Y_%m")
@@ -176,7 +184,7 @@ def subir_base(contact_type):
         s3_path = folder_path + file_name
         
         try:
-            s3.put_object(Bucket=bucket_name, Key=s3_path, Body=bytes_data)
+            s3.put_object(Bucket=bucket_name, Key=s3_path, Body=output.getvalue())
             st.success(f"Archivo XLSX subido a S3 exitosamente.")
             st.markdown("<hr>", unsafe_allow_html=True)
         except NoCredentialsError:
