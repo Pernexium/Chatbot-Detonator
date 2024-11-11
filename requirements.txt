@@ -3,5 +3,6 @@ boto3
 requests
 streamlit
 unidecode
+openpyxl
 botocore
 streamlit==1.32.0
