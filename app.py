@@ -727,6 +727,15 @@ def main():
         <div class="section-title">JSON Generado tras el Envío de Detonaciones:</div>
         <div class="json-content">{json_sanitizado}</div>
 
+        <div class="section-title">Verificación Posterior a la Ejecución:</div>
+        <p class="content">
+            Como parte del proceso de verificación, le recomendamos que realice las siguientes acciones:
+        </p>
+        <ul class="content">
+            <li>Acceda a las colas de SQS en <a href="https://us-east-2.console.aws.amazon.com/sqs/v3/home?region=us-east-2#/queues" target="_blank">AWS SQS Console</a> y verifique que la cantidad de mensajes coincida con lo indicado en los resultados de la Lambda.</li>
+            <li>Para confirmar que se han enviado los datos acordados, realice un escaneo en la tabla DynamoDB en <a href="https://us-east-2.console.aws.amazon.com/dynamodbv2/home?region=us-east-2#item-explorer?maximize=true&table=Contacts" target="_blank">AWS DynamoDB Console</a> y valide la información en la tabla correspondiente.</li>
+        </ul>
+
         <p class="content">
             Por favor, conserve este correo para su referencia. Si tiene alguna consulta o requiere asistencia adicional, no dude en ponerse en contacto con nosotros.
         </p>
@@ -741,6 +750,7 @@ def main():
 </body>
 </html>
 """
+
                 enviar_email_ses(destinatarios, asunto, cuerpo_html=cuerpo_html)
             else:
                 st.error("No se ha generado el JSON correctamente.")
