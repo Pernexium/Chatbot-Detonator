@@ -449,14 +449,14 @@ def enviar_detonacion(event_json):
         st.balloons()
         st.markdown("<hr>", unsafe_allow_html=True)
 
-
     st.markdown("""
         <div style="text-align: center;">
-            <h4>¡Detonación finalizada, verifica la cantidad de mensajes!</h4>
-            <p>Haz clic en el <a href="https://us-east-2.console.aws.amazon.com/sqs/v3/home?region=us-east-2#/queues" target="_blank">siguiente enlace</a> para acceder a la consola de SQS y asegurarte de que la cantidad de mensajes coincide con la que especificaste.</p>
+            <h4>¡Detonación finalizada, es hora de verificar!</h4>
+            <p>Verifica con <a href="mailto:enrique.ramirez@pernexium.com">Enrique Ramírez</a> que los mensajes se hayan detonado a la hora que se estableció.</p>
         </div>
         """, unsafe_allow_html=True)
     st.markdown("<hr>", unsafe_allow_html=True)
+
 
 
 #############################################################################################################################################
