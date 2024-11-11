@@ -14,6 +14,12 @@ from unidecode import unidecode
 from datetime import datetime, time, timedelta
 from botocore.exceptions import NoCredentialsError
 
+from botocore.exceptions import ClientError
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+
 
 #############################################################################################################################################
 #This corresponds to the banner that says something of detonaciones del chatbot
@@ -245,7 +251,46 @@ def seleccionar_agentes():
 
 #############################################################################################################################################
 
-#TODO add in return the name of generated files
+
+def enviar_email_ses(destinatarios, asunto, cuerpo_html):
+    # Obtener las credenciales de AWS
+    aws_access_key_id, aws_secret_access_key = obtener_credenciales_aws()
+
+    # Crear un cliente de SES
+    ses_client = boto3.client(
+        'ses',
+        region_name='us-east-2',
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key
+    )
+
+    # Configurar el correo electrónico
+    remitente = 'enrique.ramirez@pernexium.com'  # Reemplaza con tu correo verificado en SES
+
+    # Crear el objeto MIMEText
+    mensaje = MIMEMultipart('alternative')
+    mensaje['Subject'] = asunto
+    mensaje['From'] = remitente
+    mensaje['To'] = ', '.join(destinatarios)
+    
+    parte_html = MIMEText(cuerpo_html, 'html')
+    mensaje.attach(parte_html)
+
+    try:
+        response = ses_client.send_raw_email(
+            Source=remitente,
+            Destinations=destinatarios,
+            RawMessage={'Data': mensaje.as_string()},
+        )
+    except ClientError as e:
+        print(f"Error al enviar el correo: {e.response['Error']['Message']}")
+    else:
+        print(f"Correo enviado. Message ID: {response['MessageId']}")
+
+
+#############################################################################################################################################
+
+
 def invocar_lambda_cosecha(selected_agents, max_sends_per_day, max_messages_per_agent):
     aws_access_key_id, aws_secret_access_key = obtener_credenciales_aws()
     
@@ -265,13 +310,16 @@ def invocar_lambda_cosecha(selected_agents, max_sends_per_day, max_messages_per_
     print("cosecha_y_conflicto")
     
     output = json.loads(response['Payload'].read().decode('utf-8'))
+
+    # Almacenar el output en session_state
+    st.session_state.lambda_output = output
+
     return output
 
 
 #############################################################################################################################################
 
 
-#TODO add in return the name of generated files
 def invocar_lambda_mora(selected_agents, max_sends_per_day, max_messages_per_agent):
     aws_access_key_id, aws_secret_access_key = obtener_credenciales_aws()
     client = boto3.client('lambda',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key,region_name='us-east-2')
@@ -289,6 +337,10 @@ def invocar_lambda_mora(selected_agents, max_sends_per_day, max_messages_per_age
     )
     
     output = json.loads(response['Payload'].read().decode('utf-8'))
+
+    # Almacenar el output en session_state
+    st.session_state.lambda_output = output
+
     return output
 
 
@@ -576,9 +628,113 @@ def main():
 
         if st.button("ENVIAR DETONACIONES"):
             if st.session_state.json_generado is not None:
-                enviar_detonacion(st.session_state.json_generado)
+                if isinstance(st.session_state.json_generado, str):
+                        json_generado = json.loads(st.session_state.json_generado)
+                else:
+                        json_generado = st.session_state.json_generado
+
+                enviar_detonacion(json_generado)
+                json_sanitizado = json_generado.copy()
+                json_sanitizado.pop('token', None) 
+                
+                timezone = pytz.timezone("America/Mexico_City")
+                fecha_actual = datetime.now(timezone).strftime('%d-%m-%Y')  
+
+                destinatarios = ['hibran.tapia@pernexium.com', 'enrique.ramirez@pernexium.com'] 
+                asunto = f'Detonador del Chatbot - Detonación Agendada Exitosamente - {fecha_actual}'
+
+                lambda_output = st.session_state.get('lambda_output', 'No se obtuvo output de Lambda.')
+
+                cuerpo_html = f"""
+<html>
+<head>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }}
+        .header {{
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }}
+        .section-title {{
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }}
+        .content {{
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }}
+        .json-content {{
+            font-family: monospace;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            color: #333;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Detonador del Chatbot - Confirmación de Detonación Agendada</div>
+
+        <p class="content">Estimado/a,</p>
+
+        <p class="content">
+            Nos complace informarle que la detonación agendada ha sido procesada exitosamente. A continuación, le proporcionamos un resumen detallado de la operación realizada.
+        </p>
+
+        <div class="section-title">Detalles de la Operación:</div>
+        <p class="content">
+            <strong>Fecha de Programación:</strong> {fecha_actual}<br>
+            <strong>Estado:</strong> Envío exitoso
+        </p>
+
+        <div class="section-title">Resultados de la Ejecución Lambda:</div>
+        <p class="json-content">{lambda_output}</p>
+
+        <div class="section-title">JSON Generado tras el Envío de Detonaciones:</div>
+        <div class="json-content">{json_sanitizado}</div>
+
+        <p class="content">
+            Por favor, conserve este correo para su referencia. Si tiene alguna consulta o requiere asistencia adicional, no dude en ponerse en contacto con nosotros.
+        </p>
+
+        <p class="content">
+            Atentamente,<br>
+            Equipo de Análitica<br>
+            Pernexium<br>
+            <a href="mailto:enrique.ramirez@pernexium.com">enrique.ramirez@pernexium.com</a>
+        </p>
+    </div>
+</body>
+</html>
+"""
+
+
+
+                enviar_email_ses(destinatarios, asunto, cuerpo_html=cuerpo_html)
             else:
                 st.error("No se ha generado el JSON correctamente.")
+
+
 
 
 #############################################################################################################################################
