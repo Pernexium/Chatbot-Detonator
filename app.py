@@ -11,12 +11,11 @@ import pandas as pd
 from io import BytesIO
 import streamlit as st
 from unidecode import unidecode
-from datetime import datetime, time, timedelta
-from botocore.exceptions import NoCredentialsError
-
 from email.mime.text import MIMEText
 from botocore.exceptions import ClientError
 from email.mime.multipart import MIMEMultipart
+from datetime import datetime, time, timedelta
+from botocore.exceptions import NoCredentialsError
 
 
 #############################################################################################################################################
@@ -597,6 +596,7 @@ def main():
                 st.error("Tipo de contactación no válido para generar CSV's.")
                 return
             st.success(f"Respuesta de Lambda: {output}")
+            st.session_state.lambda_output = output
             st.session_state.csv_generado = True 
         except Exception as e:
             st.error(f"Error al invocar Lambda: {str(e)}")
@@ -615,13 +615,24 @@ def main():
     if st.button("Confirmar configuración") and not st.session_state.configuracion_confirmada:
         st.markdown("<hr>", unsafe_allow_html=True)
 
+        # Generate JSON and store it in session_state
         st.session_state.json_generado = generar_y_subir_json(
-            contact_type, detonation_time, selected_agents, max_sends_per_day, 
-            max_messages_per_agent, agent_templates, bot_id, data_base, emails_agentes, ids_agentes
+            contact_type, detonation_time, selected_agents, max_sends_per_day,
+            max_messages_per_agent, agent_templates, bot_id, data_base,
+            emails_agentes, ids_agentes, st.session_state.lambda_output, {}  # Temporarily pass an empty dict for json_sanitizado
         )
 
-        st.session_state.configuracion_confirmada = True 
-        st.success("Configuración confirmada correctamente.")
+        # Only create json_sanitizado if json_generado was successfully created
+        if st.session_state.json_generado:
+            json_sanitizado = json.loads(st.session_state.json_generado)  # Load the JSON if it's in string format
+            json_sanitizado.pop('token', None)  # Remove sensitive information like tokens
+            
+            # Update session state to mark configuration as confirmed
+            st.session_state.configuracion_confirmada = True
+            st.success("Configuración confirmada correctamente.")
+        else:
+            st.error("Error: No se pudo generar el JSON correctamente.")
+
     
     if st.session_state.json_generado:
         st.code(st.session_state.json_generado, language='json')
