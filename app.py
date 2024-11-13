@@ -492,8 +492,8 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
         "token": token, #corresponds to the token of cognito
         "agent_mails": agent_mails, # this corresponds to an array that contains the mails of selected agents
         "agent_ids": agent_ids,
-        "lambda_output": lambda_output,
-        "json_sanitizado": json_sanitizado
+        "lambda_output": str(lambda_output),
+        "json_sanitizado": str(json_sanitizado)
     }
     
     event_data_no_token = event_data.copy()
