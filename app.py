@@ -628,19 +628,19 @@ def main():
         st.session_state.json_generado = generar_y_subir_json(
             contact_type, detonation_time, selected_agents, max_sends_per_day,
             max_messages_per_agent, agent_templates, bot_id, data_base,
-            emails_agentes, ids_agentes, st.session_state.lambda_output, {}  # Temporarily pass an empty dict for json_sanitizado
+            emails_agentes, ids_agentes, st.session_state.lambda_output  # Temporarily pass an empty dict for json_sanitizado
         )
 
         # Only create json_sanitizado if json_generado was successfully created
-        if st.session_state.json_generado:
-            json_sanitizado = json.loads(st.session_state.json_generado)  # Load the JSON if it's in string format
-            json_sanitizado.pop('token', None)  # Remove sensitive information like tokens
+        #if st.session_state.json_generado:
+        #    json_sanitizado = json.loads(st.session_state.json_generado)  # Load the JSON if it's in string format
+         #   json_sanitizado.pop('token', None)  # Remove sensitive information like tokens
             
             # Update session state to mark configuration as confirmed
-            st.session_state.configuracion_confirmada = True
-            st.success("Configuración confirmada correctamente.")
-        else:
-            st.error("Error: No se pudo generar el JSON correctamente.")
+        st.session_state.configuracion_confirmada = True
+        #    st.success("Configuración confirmada correctamente.")
+        #else:
+        #    st.error("Error: No se pudo generar el JSON correctamente.")
 
     
     if st.session_state.json_generado:
