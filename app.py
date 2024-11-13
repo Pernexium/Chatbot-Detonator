@@ -462,7 +462,7 @@ def enviar_detonacion(event_json):
 #############################################################################################################################################
 
 
-def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base, agent_mails, agent_ids, lambda_output, json_sanitizado):
+def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base, agent_mails, agent_ids, lambda_output):
     mexico_tz = pytz.timezone('America/Mexico_City')
     current_date = datetime.now(mexico_tz)
     formatted_date = current_date.strftime('%Y_%m_%d')  
@@ -478,7 +478,7 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
 
     token = obtener_token_desde_secrets() #the token to be used in obtain wsbs
 
-    event_data = {
+    event_data_prev_include_json = {
         "bot_id": bot_id,
         "contact_type": contact_type,
         "data_base": data_base,
@@ -492,12 +492,21 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
         "token": token, #corresponds to the token of cognito
         "agent_mails": agent_mails, # this corresponds to an array that contains the mails of selected agents
         "agent_ids": agent_ids,
-        "lambda_output": str(lambda_output),
-        "json_sanitizado": str(json_sanitizado)
+        "lambda_output": str(lambda_output)
+        #"json_sanitizado": str(json_sanitizado)
     }
+
+
     
-    event_data_no_token = event_data.copy()
+    event_data_no_token = event_data_prev_include_json.copy()
     event_data_no_token.pop("token", None)
+
+    # Convert sanitized data to JSON string
+    json_sanitizado = json.dumps(event_data_no_token, indent=4)
+
+    # Create a new event_data with json_sanitizado
+    event_data = event_data_prev_include_json.copy()
+    event_data["json_sanitizado"] = json_sanitizado
 
     event_json_no_token = json.dumps(event_data_no_token, indent=4)
 
@@ -642,6 +651,8 @@ def main():
 
         if st.button("ENVIAR DETONACIONES"):
             if st.session_state.json_generado is not None:
+                enviar_detonacion(st.session_state.json_generado)
+                """
                 if isinstance(st.session_state.json_generado, str):
                         json_generado = json.loads(st.session_state.json_generado)
                 else:
@@ -652,106 +663,14 @@ def main():
                 json_sanitizado.pop('token', None) 
                 
                 timezone = pytz.timezone("America/Mexico_City")
-                fecha_actual = datetime.now(timezone).strftime('%d-%m-%Y')  
+                fecha_actual = datetime.now(timezone).strftime('%d-%m-%Y')  """
 
-                destinatarios = ['hibran.tapia@pernexium.com', 'enrique.ramirez@pernexium.com'] 
-                asunto = f'Detonador del Chatbot - Detonación Agendada Exitosamente - {fecha_actual}'
+                #destinatarios = ['hibran.tapia@pernexium.com', 'enrique.ramirez@pernexium.com'] 
+                #asunto = f'Detonador del Chatbot - Detonación Agendada Exitosamente - {fecha_actual}'
 
-                lambda_output = st.session_state.get('lambda_output', 'No se obtuvo output de Lambda.')
+                #lambda_output = st.session_state.get('lambda_output', 'No se obtuvo output de Lambda.')
 
-                cuerpo_html = f"""
-<html>
-<head>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-        }}
-        .container {{
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }}
-        .header {{
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-        }}
-        .section-title {{
-            font-size: 16px;
-            font-weight: bold;
-            color: #555;
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }}
-        .content {{
-            font-size: 14px;
-            color: #333;
-            line-height: 1.6;
-        }}
-        .json-content {{
-            font-family: monospace;
-            background-color: #f9f9f9;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            color: #333;
-            font-size: 12px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">Detonador del Chatbot - Confirmación de Detonación Agendada</div>
-
-        <p class="content">Estimado/a,</p>
-
-        <p class="content">
-            Nos complace informarle que la detonación agendada ha sido procesada exitosamente. A continuación, le proporcionamos un resumen detallado de la operación realizada.
-        </p>
-
-        <div class="section-title">Detalles de la Operación:</div>
-        <p class="content">
-            <strong>Fecha de Programación:</strong> {fecha_actual}<br>
-            <strong>Estado:</strong> Envío exitoso
-        </p>
-
-        <div class="section-title">Resultados de la Ejecución Lambda:</div>
-        <p class="json-content">{lambda_output}</p>
-
-        <div class="section-title">JSON Generado tras el Envío de Detonaciones:</div>
-        <div class="json-content">{json_sanitizado}</div>
-
-        <div class="section-title">Verificación Posterior a la Ejecución:</div>
-        <p class="content">
-            Como parte del proceso de verificación, le recomendamos que realice las siguientes acciones:
-        </p>
-        <ul class="content">
-            <li>Acceda a las colas de SQS en <a href="https://us-east-2.console.aws.amazon.com/sqs/v3/home?region=us-east-2#/queues" target="_blank">AWS SQS Console</a> y verifique que la cantidad de mensajes coincida con lo indicado en los resultados de la Lambda.</li>
-            <li>Para confirmar que se han enviado los datos acordados, realice un escaneo en la tabla DynamoDB en <a href="https://us-east-2.console.aws.amazon.com/dynamodbv2/home?region=us-east-2#item-explorer?maximize=true&table=Contacts" target="_blank">AWS DynamoDB Console</a> y valide la información en la tabla correspondiente.</li>
-        </ul>
-
-        <p class="content">
-            Por favor, conserve este correo para su referencia. Si tiene alguna consulta o requiere asistencia adicional, no dude en ponerse en contacto con nosotros.
-        </p>
-
-        <p class="content">
-            Atentamente,<br>
-            Equipo de Análitica<br>
-            Pernexium<br>
-            <a href="mailto:enrique.ramirez@pernexium.com">enrique.ramirez@pernexium.com</a>
-        </p>
-    </div>
-</body>
-</html>
-"""
-
-                enviar_email_ses(destinatarios, asunto, cuerpo_html=cuerpo_html)
+                #enviar_email_ses(destinatarios, asunto, cuerpo_html=cuerpo_html)
             else:
                 st.error("No se ha generado el JSON correctamente.")
 
