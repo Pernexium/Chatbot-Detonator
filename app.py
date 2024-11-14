@@ -1,25 +1,26 @@
 import json
 import toml
-import pytz
+import pytz #what is used for?
 import boto3
 import base64
 import random
 import hashlib
 import requests
-import unidecode
-import pandas as pd
-from io import BytesIO
+import unidecode #what is used for
+import pandas as pd #what is used for
+from io import BytesIO #what is used for
 import streamlit as st
 from unidecode import unidecode
-from email.mime.text import MIMEText
-from botocore.exceptions import ClientError
-from email.mime.multipart import MIMEMultipart
-from datetime import datetime, time, timedelta
+from email.mime.text import MIMEText #este es de mail
+from botocore.exceptions import ClientError #Este es de mail
+from email.mime.multipart import MIMEMultipart #Este es de mail
+from datetime import datetime, time, timedelta 
 from botocore.exceptions import NoCredentialsError
 
 
 #############################################################################################################################################
 #This corresponds to the banner that says something of detonaciones del chatbot
+#Verified
 
 st.set_page_config(page_title = "Pernexium", page_icon = "./Varios/Logo/PXM isotipo 2.png")
 
@@ -34,7 +35,7 @@ st.markdown("<hr>", unsafe_allow_html=True)
 
 
 #############################################################################################################################################
-
+#Verified
 
 def obtener_token_desde_secrets():
     ruta_secrets = ".streamlit/secrets.toml"
@@ -43,7 +44,7 @@ def obtener_token_desde_secrets():
 
 
 #############################################################################################################################################
-
+#Verified
 
 def seleccionar_bot_campana():
     url = "https://sls-chatbot.pernexium.com/prod/bots" 
@@ -87,7 +88,7 @@ def seleccionar_bot_campana():
 
 
 #############################################################################################################################################
-
+#Verified
 #TODO implement this function in further dev, this actually retrieves the sessions, and let user select session
 def seleccionar_session():
     url = "https://sls-chatbot.pernexium.com/prod/sessions"
@@ -121,7 +122,7 @@ def seleccionar_session():
 
 
 #############################################################################################################################################
-
+#Verified
 #TODO ya no existe mora?
 def seleccionar_contactacion():
     contact_type = st.selectbox("**2. TIPO DE CONTACTACIÓN:**", ["mora_agentes", "cosecha_y_conflicto_agentes"])
@@ -136,7 +137,7 @@ def seleccionar_contactacion():
 
 
 #############################################################################################################################################
-
+#Verified
 
 def obtener_credenciales_aws():
     ruta_secrets = ".streamlit/secrets.toml"
@@ -159,7 +160,8 @@ def subir_base(contact_type):
     
     st.write("**3. BASE DE DETONACIONES:**")
     st.write("*La base debe ser un archivo .xlsx y debe contener la columna 'credito'. El nombre de las columnas no debe contener carácteres especiales, esto incluye tildes y mayúsculas.*")
-    uploaded_file = st.file_uploader("", type=["xlsx"])
+    uploaded_file = st.file_uploader("detonation base", type=["xlsx"], label_visibility="hidden") #Added non empty label to avoid errors
+    #`label` got an empty value. This is discouraged for accessibility reasons and may be disallowed in the future by raising an exception. Please provide a non-empty label and hide it with label_visibility if needed.
     st.markdown("<hr>", unsafe_allow_html=True)
     
     data_base = None 
@@ -200,9 +202,11 @@ def subir_base(contact_type):
     
     return uploaded_file, data_base
 
+#Aqui se cambiaron varias cosillas, pero principalmente se añade pandas como una capa para verificar y sanitizar los datos del xlsx
+#Creo que no afecta en nada, sospechaba que algo le dolía por unicode, pero no, creo que solo se usa aqui
 
 #############################################################################################################################################
-
+#Verified
 
 def seleccionar_agentes():
     url = "https://sls-chatbot.pernexium.com/prod/agents"
@@ -250,7 +254,7 @@ def seleccionar_agentes():
 
 
 #############################################################################################################################################
-
+#DEPRECATED, NOW HANDLED BY THE BACK, CHECK IS NOT BEING USED IN CURRENT STREAMLIT
 
 def enviar_email_ses(destinatarios, asunto, cuerpo_html):
     # Obtener las credenciales de AWS
@@ -289,7 +293,7 @@ def enviar_email_ses(destinatarios, asunto, cuerpo_html):
 
 
 #############################################################################################################################################
-
+#Verified, solo se añadio lo de guardar el output
 
 def invocar_lambda_cosecha(selected_agents, max_sends_per_day, max_messages_per_agent):
     aws_access_key_id, aws_secret_access_key = obtener_credenciales_aws()
@@ -318,7 +322,8 @@ def invocar_lambda_cosecha(selected_agents, max_sends_per_day, max_messages_per_
 
 
 #############################################################################################################################################
-
+#Verified, solo se añadio lo de guardar el output
+#TODO remember check after definitive release, that in order of best practices, this returns the generated files, same for the lambda above
 
 def invocar_lambda_mora(selected_agents, max_sends_per_day, max_messages_per_agent):
     aws_access_key_id, aws_secret_access_key = obtener_credenciales_aws()
@@ -345,7 +350,7 @@ def invocar_lambda_mora(selected_agents, max_sends_per_day, max_messages_per_age
 
 
 #############################################################################################################################################
-
+#Verified
 #TODO here should receive also the session as a parameter so url is not fixed, but for demo keep it like this
 def seleccionar_templates_por_agente(selected_agents):
     st.markdown("<hr>", unsafe_allow_html=True)
@@ -397,7 +402,8 @@ def seleccionar_templates_por_agente(selected_agents):
 
 
 #############################################################################################################################################
-
+#Here the function only was updated so can support the correc timezone (mexico city)
+#Verified, there should be no problem with this
 
 def seleccionar_fecha_hora():
     mexico_tz = pytz.timezone('America/Mexico_City')
@@ -428,7 +434,7 @@ def seleccionar_fecha_hora():
 
 
 #############################################################################################################################################
-
+#Verified, actually the post method was not modified, the only thing that changed is the final message 
 
 def enviar_detonacion(event_json):
     url = "https://kz565xlibg.execute-api.us-east-2.amazonaws.com/dev/detonation/config"
@@ -463,6 +469,9 @@ def enviar_detonacion(event_json):
 
 
 def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base, agent_mails, agent_ids, lambda_output):
+    #TODO Debug remove
+    #print(f"in generar y subir json, this is value of lambda_output: {lambda_output}") DEBUG, REMOVE
+    #print(f"this after aplying str: {str(lambda_output)}") DEBUG, REMOVE
     mexico_tz = pytz.timezone('America/Mexico_City')
     current_date = datetime.now(mexico_tz)
     formatted_date = current_date.strftime('%Y_%m_%d')  
@@ -478,7 +487,7 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
 
     token = obtener_token_desde_secrets() #the token to be used in obtain wsbs
 
-    event_data_prev_include_json = {
+    event_data = {
         "bot_id": bot_id,
         "contact_type": contact_type,
         "data_base": data_base,
@@ -492,25 +501,36 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
         "token": token, #corresponds to the token of cognito
         "agent_mails": agent_mails, # this corresponds to an array that contains the mails of selected agents
         "agent_ids": agent_ids,
-        "lambda_output": str(lambda_output)
-        #"json_sanitizado": str(json_sanitizado)
+        "lambda_output": str(lambda_output),
+        "campaign": "bancoppel"
     }
-
-
     
-    event_data_no_token = event_data_prev_include_json.copy()
+    event_data_no_token = event_data.copy()
     event_data_no_token.pop("token", None)
-
-    # Convert sanitized data to JSON string
-    json_sanitizado = json.dumps(event_data_no_token, indent=4)
-
-    # Create a new event_data with json_sanitizado
-    event_data = event_data_prev_include_json.copy()
-    event_data["json_sanitizado"] = json_sanitizado
 
     event_json_no_token = json.dumps(event_data_no_token, indent=4)
 
-    event_json = json.dumps(event_data, indent=4)
+    event_data_final = {
+        "bot_id": bot_id,
+        "contact_type": contact_type,
+        "data_base": data_base,
+        "selected_agents": selected_agents,
+        "agent_templates": agent_templates_filtered,
+        "max_sends_per_day": int(max_sends_per_day),
+        "max_messages_per_agent": int(max_messages_per_agent),
+        "detonation_time": detonation_datetime.strftime('%d-%m-%Y %H:%M:%S'),
+        "selected_session": "353257377876857", #Corresponds to the session (meta phone number)
+        "generated_files": generated_files, #Corresponds to an array of the generated files in master
+        "token": token, #corresponds to the token of cognito
+        "agent_mails": agent_mails, # this corresponds to an array that contains the mails of selected agents
+        "agent_ids": agent_ids,
+        "lambda_output": str(lambda_output),
+        "json_sanitizado": str(event_json_no_token),
+        "campaign": "bancoppel"
+    }
+    #TODO suggestion, not send again in json sanitizado the info of lambda_output, since in mail, that is the only part where is used, is not necessary
+
+    event_json = json.dumps(event_data_final, indent=4)
     #st.code(event_json, language='json') 
 
     file_name = f"{formatted_date}_bancoppel_detonaciones_chatbot_{contact_type}_{year_month}.json"
@@ -531,14 +551,14 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
 
 
 #############################################################################################################################################
-
+#Verified
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 
 #############################################################################################################################################
-
+#Verified
 
 def login():
     if "logged_in" not in st.session_state:
@@ -605,7 +625,8 @@ def main():
                 st.error("Tipo de contactación no válido para generar CSV's.")
                 return
             st.success(f"Respuesta de Lambda: {output}")
-            st.session_state.lambda_output = output
+            st.session_state.lambda_output = output #aqui me queda la duda, de porque si en las lambdas, asignamos el valor este al st.session_state.lambda_output, aqui lo volvemos a hacer
+            #capaz podemos borrar del de invocar_lambda_mora y del de invocar_lambda_cosecha esa parte que hace esto
             st.session_state.csv_generado = True 
         except Exception as e:
             st.error(f"Error al invocar Lambda: {str(e)}")
@@ -624,13 +645,16 @@ def main():
     if st.button("Confirmar configuración") and not st.session_state.configuracion_confirmada:
         st.markdown("<hr>", unsafe_allow_html=True)
 
+        #TODO DEBUG REMOVE
+        #print(f"what is containing session state lambda output: {st.session_state.lambda_output}")
+
         # Generate JSON and store it in session_state
         st.session_state.json_generado = generar_y_subir_json(
-            contact_type, detonation_time, selected_agents, max_sends_per_day,
-            max_messages_per_agent, agent_templates, bot_id, data_base,
-            emails_agentes, ids_agentes, st.session_state.lambda_output  # Temporarily pass an empty dict for json_sanitizado
+            contact_type, detonation_time, selected_agents, max_sends_per_day, max_messages_per_agent, agent_templates, bot_id, data_base, emails_agentes, ids_agentes, st.session_state.lambda_output
         )
 
+        #TODO DEBUG REMOVE
+        #print(f"generated_json: {st.session_state.json_generado}")
         # Only create json_sanitizado if json_generado was successfully created
         #if st.session_state.json_generado:
         #    json_sanitizado = json.loads(st.session_state.json_generado)  # Load the JSON if it's in string format
@@ -638,7 +662,7 @@ def main():
             
             # Update session state to mark configuration as confirmed
         st.session_state.configuracion_confirmada = True
-        #    st.success("Configuración confirmada correctamente.")
+        st.success("Configuración confirmada correctamente.")
         #else:
         #    st.error("Error: No se pudo generar el JSON correctamente.")
 
@@ -652,18 +676,18 @@ def main():
         if st.button("ENVIAR DETONACIONES"):
             if st.session_state.json_generado is not None:
                 enviar_detonacion(st.session_state.json_generado)
-                """
-                if isinstance(st.session_state.json_generado, str):
-                        json_generado = json.loads(st.session_state.json_generado)
-                else:
-                        json_generado = st.session_state.json_generado
-
-                enviar_detonacion(json_generado)
-                json_sanitizado = json_generado.copy()
-                json_sanitizado.pop('token', None) 
                 
-                timezone = pytz.timezone("America/Mexico_City")
-                fecha_actual = datetime.now(timezone).strftime('%d-%m-%Y')  """
+                #if isinstance(st.session_state.json_generado, str):
+                #        json_generado = json.loads(st.session_state.json_generado)
+                #else:
+                #        json_generado = st.session_state.json_generado
+
+                #enviar_detonacion(json_generado)
+                #json_sanitizado = json_generado.copy()
+                #json_sanitizado.pop('token', None) 
+                
+                #timezone = pytz.timezone("America/Mexico_City")
+                #fecha_actual = datetime.now(timezone).strftime('%d-%m-%Y')
 
                 #destinatarios = ['hibran.tapia@pernexium.com', 'enrique.ramirez@pernexium.com'] 
                 #asunto = f'Detonador del Chatbot - Detonación Agendada Exitosamente - {fecha_actual}'
@@ -680,3 +704,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+#TODO in general, remove remaining commented code
