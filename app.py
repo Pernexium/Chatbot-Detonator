@@ -437,7 +437,7 @@ def seleccionar_fecha_hora():
 #Verified, actually the post method was not modified, the only thing that changed is the final message 
 
 def enviar_detonacion(event_json):
-    url = "https://kz565xlibg.execute-api.us-east-2.amazonaws.com/dev/detonation/config"
+    url = "https://0jo7ndsqtc.execute-api.us-east-2.amazonaws.com/prod/detonation/config"
     
     headers = {"Content-Type": "application/json"}
 
@@ -525,7 +525,7 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
         "agent_mails": agent_mails, # this corresponds to an array that contains the mails of selected agents
         "agent_ids": agent_ids,
         "lambda_output": str(lambda_output),
-        "json_sanitizado": str(event_json_no_token),
+        "sanitized_json": str(event_json_no_token),
         "campaign": "bancoppel"
     }
     #TODO suggestion, not send again in json sanitizado the info of lambda_output, since in mail, that is the only part where is used, is not necessary
