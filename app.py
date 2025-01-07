@@ -178,7 +178,7 @@ def subir_base(contact_type):
         year_month = hoy.strftime("%Y_%m")
         day_month = hoy.strftime("%m_%d")
         
-        bucket_name = 's3-pernexium-report'
+        bucket_name = 's3-pernexium-report-2'
         folder_path = f"raw/bancoppel/detonaciones/{contact_type}/{year_month}/"
         
         if contact_type == "mora_agentes":
@@ -307,7 +307,7 @@ def invocar_lambda_cosecha(selected_agents, max_sends_per_day, max_messages_per_
     }
 
     response = client.invoke(
-        FunctionName='detonaciones_chatbot_bancoppel_cosecha_y_conflicto_agentes',  
+        FunctionName='pernexium_analytics_bancoppel_detonaciones_chatbot_coco',  
         InvocationType='RequestResponse',
         Payload=json.dumps(payload)
     )
@@ -336,7 +336,7 @@ def invocar_lambda_mora(selected_agents, max_sends_per_day, max_messages_per_age
     }
 
     response = client.invoke(
-        FunctionName='detonaciones_chatbot_bancoppel_moras_agentes',  
+        FunctionName='pernexium_analytics_bancoppel_detonaciones_chatbot_moras',  
         InvocationType='RequestResponse',
         Payload=json.dumps(payload)
     )
@@ -437,7 +437,7 @@ def seleccionar_fecha_hora():
 #Verified, actually the post method was not modified, the only thing that changed is the final message 
 
 def enviar_detonacion(event_json):
-    url = "https://0jo7ndsqtc.execute-api.us-east-2.amazonaws.com/prod/detonation/config"
+    url = "https://gxtxk28bli.execute-api.us-east-2.amazonaws.com/prod/detonation/config"
     
     headers = {"Content-Type": "application/json"}
 
@@ -538,7 +538,7 @@ def generar_y_subir_json(contact_type, detonation_datetime, selected_agents, max
     aws_access_key_id, aws_secret_access_key = obtener_credenciales_aws()
     s3 = boto3.client('s3',aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
     
-    bucket_name = "s3-pernexium-report"
+    bucket_name = "s3-pernexium-report-2"
     s3_key = f"staging/bancoppel/detonaciones/{contact_type}/{year_month}/{file_name}" 
 
     try:
