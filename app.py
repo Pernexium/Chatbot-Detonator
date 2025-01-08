@@ -54,14 +54,14 @@ def seleccionar_bot_campana():
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token_perne}" 
     }
-    
+    id_mapping = {}
     response = requests.get(url, headers=headers)
     
     if response.status_code == 200:
         data = response.json()
         if isinstance(data, list):
             options = []
-            id_mapping = {}
+            #id_mapping = {}
             for item in data:
                 option = f"{item['name']} - {item['id']}"
                 options.append(option)
