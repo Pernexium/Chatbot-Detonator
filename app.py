@@ -47,7 +47,7 @@ def obtener_token_desde_secrets():
 #Verified
 
 def seleccionar_bot_campana():
-    url = "https://chatbot.pernexium.com.mx/prod/bots" 
+    url = "https://chatbot.pernexium.com.mx/bots/prod/bots" 
     token_perne = obtener_token_desde_secrets()
     
     headers = {
@@ -91,7 +91,7 @@ def seleccionar_bot_campana():
 #Verified
 #TODO implement this function in further dev, this actually retrieves the sessions, and let user select session
 def seleccionar_session():
-    url = "https://chatbot.pernexium.com.mx/prod/sessions"
+    url = "https://chatbot.pernexium.com.mx/contacts/prod/sessions"
     token_perne = obtener_token_desde_secrets()
     
     headers = {
@@ -209,7 +209,7 @@ def subir_base(contact_type):
 #Verified
 
 def seleccionar_agentes():
-    url = "https://chatbot.pernexium.com.mx/prod/agents"
+    url = "https://chatbot.pernexium.com.mx/users/prod/users/agents"
     token_perne = obtener_token_desde_secrets()
     
     headers = {
@@ -354,7 +354,7 @@ def invocar_lambda_mora(selected_agents, max_sends_per_day, max_messages_per_age
 #TODO here should receive also the session as a parameter so url is not fixed, but for demo keep it like this
 def seleccionar_templates_por_agente(selected_agents):
     st.markdown("<hr>", unsafe_allow_html=True)
-    url = "https://chatbot.pernexium.com.mx/prod/templates/session/353257377876857?session_id"
+    url = "https://chatbot.pernexium.com.mx/detonation/prod/templates/session/353257377876857"
     token_perne = obtener_token_desde_secrets()
     
     headers = {
